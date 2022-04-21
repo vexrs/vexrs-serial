@@ -7,12 +7,13 @@ edition = "2021"
 
 [dependencies]
 acid_io = { version = "0.1.0" }
-cobs = { git = "ssh://git@github.com/cmcqueen/cobs-rs.git" }
+cobs = { git = "ssh://git@github.com/Culpeper-Robotics/cobs-rs.git" }
 newlib-alloc = "0.1.0"
-vexv5rt = { git = "ssh://git@github.com/Culpeper-Robotics/vexv5rt", optional = true }
+vexv5rt = { git="ssh://git@github.com/Culpeper-Robotics/vexv5rt.git", optional = true }
 
 [features]
-# If this feature is enabled this crate can run ont eh v5 brain
+
+# If this feature is enabled this crate can run on teh v5 brain
 v5 = ["dep:vexv5rt"]
 use_std = []
 
