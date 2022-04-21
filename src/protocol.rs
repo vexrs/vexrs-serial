@@ -152,6 +152,11 @@ impl<'a, T: Read + Write> CEROSSerial<'a, T> {
         let packet = CEROSSerial::<T>::create_serial_packet(self.pros_compat, data_type, data);
 
         // Send it
-        self.stream.write(&packet).unwrap()
+        let size = self.stream.write(&packet).unwrap();
+
+        // Flush the buffer
+        self.stream.flush();
+
+        size
     }
 }
