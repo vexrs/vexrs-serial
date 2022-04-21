@@ -1,4 +1,5 @@
-#![no_std]
+#![cfg_attr(not(feature="use_std"), no_std)]
+
 
 // Externs for various crates we use
 extern crate alloc;
