@@ -11,13 +11,11 @@ use acid_io::{Read, Write};
 #[derive(Default)]
 pub struct Serial {
     buffer: Vec<u8>,
-    write_buffer: Vec<u8>
-
 }
 
 impl Serial {
     pub fn new() -> Serial {
-        Serial { buffer: Vec::new(), write_buffer: Vec::new() }
+        Serial { buffer: Vec::new() }
     }
 }
 
@@ -58,19 +56,16 @@ impl Read for Serial {
 impl Write for Serial {
     fn write(&mut self, buf: &[u8]) -> Result<usize, acid_io::Error> {
 
-        // Push the data to the buffer
-        self.write_buffer.extend_from_slice(buf);
+        unsafe {
+            crate::internal::send_serial_raw(buf.to_vec());
+        }
 
         Ok(buf.len())
     }
 
     fn flush(&mut self) -> Result<(), acid_io::Error> {
 
-        // Flush the entire buffer to serial
-        unsafe { crate::internal::send_serial_raw(self.buffer.clone()); }
-
-        // Clear the buffer
-        self.write_buffer.clear();
+        
 
         Ok(())
     }

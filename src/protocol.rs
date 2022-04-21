@@ -68,7 +68,7 @@ impl<'a, T: Read + Write> CEROSSerial<'a, T> {
                     }
                 }
             } else {
-                // Magic number with data type
+                // Magic number with data type and length
                 vec![0x37u8, 0x31, 0x32, 0x32, data_type as u8]
             }
         };
@@ -78,7 +78,9 @@ impl<'a, T: Read + Write> CEROSSerial<'a, T> {
         packet.extend(data);
 
         // COBS encode the data
-        cobs::cobsr::encode_vector(&packet).unwrap_or_else(|_| Vec::<u8>::new())
+        let mut data =  cobs::cobs::encode_vector(&packet).unwrap_or_else(|_| Vec::<u8>::new());
+        data.push(0x00);
+        data
     }
 
     /// Parses a serial packet from an input vector
@@ -91,9 +93,9 @@ impl<'a, T: Read + Write> CEROSSerial<'a, T> {
         // Clear any 0x00 bytes at the beginning
         let data = data.iter().skip_while(|&x| *x == 0x00).cloned().collect::<Vec<u8>>();
         
-        
         // If it starts with sout, serr, or kdbg it is a PROS packet
         if data.starts_with(b"sout") {
+            
             (DataType::Print, data[4..].to_vec())
         } else if data.starts_with(b"serr") {
             (DataType::Error, data[4..].to_vec())
@@ -110,6 +112,8 @@ impl<'a, T: Read + Write> CEROSSerial<'a, T> {
                     return (DataType::Print, Vec::new());
                 }
             };
+            
+        
 
             // Get the rest of the bytes
             let data = data[5..].to_vec();
@@ -131,13 +135,14 @@ impl<'a, T: Read + Write> CEROSSerial<'a, T> {
             let size = self.stream.read(&mut data).unwrap();
             self.buffer.extend(&data[..size]);
         }
-
+        
+        
         // Find the index of the first 0x00 byte and split it off
         let pos = self.buffer.iter().position(|&r| r == 0x00).unwrap();
         let data: Vec<u8> = self.buffer.drain(0..pos).collect();
         
         // If there is still more data on the buffer, pop the last zero
-        if !self.buffer.is_empty() {
+        if !self.buffer.is_empty() && self.buffer[0] == 0x00 {
             self.buffer.drain(0..1).for_each(drop);
         }
 
