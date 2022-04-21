@@ -1,7 +1,14 @@
 
-
 use acid_io::{Read, Write};
-use core::num;
+
+#[cfg(feature = "use_std")]
+use std::io::{Read, Write};
+
+
+
+
+
+
 use core::prelude::rust_2021::*;
 use alloc::vec;
 use alloc::vec::Vec;
