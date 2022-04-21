@@ -25,14 +25,13 @@ pub enum DataType {
 
 
 /// Implements the CEROS serial protocol
-#[derive(Default)]
-pub struct CEROSSerial<T: Read + Write> {
-    stream: &mut T,
+pub struct CEROSSerial<'a, T: Read + Write> {
+    stream: &'a mut T,
     buffer: Vec<u8>,
     pros_compat: bool,
 }
 
-impl<T: Read + Write> CEROSSerial<T> {
+impl<'a, T: Read + Write> CEROSSerial<'a, T> {
     /// Creates a new instance of CEROSSerial
     pub fn new(stream: &mut T) -> CEROSSerial<T> {
         CEROSSerial {
