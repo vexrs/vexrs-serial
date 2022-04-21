@@ -9,9 +9,12 @@ edition = "2021"
 acid_io = "0.1.0"
 corncobs = "0.1.1"
 newlib-alloc = "0.1.0"
-vexv5rt = { git = "ssh://git@github.com/Culpeper-Robotics/vexv5rt" }
+vexv5rt = { git = "ssh://git@github.com/Culpeper-Robotics/vexv5rt", optional = true }
 
+[features]
 
+# If this feature is enabled this crate can run ont eh v5 brain
+v5 = ["dep:vexv5rt"]
 
 [profile.dev]
 panic = "abort"
