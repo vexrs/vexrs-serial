@@ -155,7 +155,7 @@ impl<'a, T: Read + Write> CEROSSerial<'a, T> {
         let size = self.stream.write(&packet).unwrap();
 
         // Flush the buffer
-        self.stream.flush();
+        self.stream.flush().unwrap();
 
         size
     }
