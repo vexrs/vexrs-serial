@@ -4,7 +4,6 @@
 // Externs for various crates we use
 extern crate alloc;
 extern crate core;
-extern crate newlib_alloc;
 
 // Modules that we define
 #[cfg(feature = "v5")]
