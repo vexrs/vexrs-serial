@@ -20,14 +20,14 @@ pub enum DataType {
 /// Implements the CEROS serial protocol
 #[derive(Default)]
 pub struct CEROSSerial<T: Read + Write> {
-    stream: T,
+    stream: &mut T,
     buffer: Vec<u8>,
     pros_compat: bool,
 }
 
 impl<T: Read + Write> CEROSSerial<T> {
     /// Creates a new instance of CEROSSerial
-    pub fn new(stream: T) -> CEROSSerial<T> {
+    pub fn new(stream: &mut T) -> CEROSSerial<T> {
         CEROSSerial {
             stream,
             buffer: Vec::new(),
@@ -37,7 +37,7 @@ impl<T: Read + Write> CEROSSerial<T> {
 
     /// Creates a new instance of CEROSSerial with PROS
     /// compatibility enabled
-    pub fn new_pros(stream: T) -> CEROSSerial<T> {
+    pub fn new_pros(stream: &mut T) -> CEROSSerial<T> {
         CEROSSerial {
             stream,
             buffer: Vec::new(),
