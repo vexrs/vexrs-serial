@@ -21,6 +21,7 @@ pub enum DataType {
 #[derive(Default)]
 pub struct CEROSSerial<T: Read + Write> {
     stream: T,
+    buffer: Vec<u8>,
     pros_compat: bool,
 }
 
@@ -29,6 +30,7 @@ impl<T: Read + Write> CEROSSerial<T> {
     pub fn new(stream: T) -> CEROSSerial<T> {
         CEROSSerial {
             stream,
+            buffer: Vec::new(),
             pros_compat: false
         }
     }
@@ -38,6 +40,7 @@ impl<T: Read + Write> CEROSSerial<T> {
     pub fn new_pros(stream: T) -> CEROSSerial<T> {
         CEROSSerial {
             stream,
+            buffer: Vec::new(),
             pros_compat: true
         }
     }
@@ -113,5 +116,37 @@ impl<T: Read + Write> CEROSSerial<T> {
             // Otherwise return no data
             (DataType::Print, Vec::new())
         }
+    }
+
+    /// Reads in serial data
+    pub fn read_data(&mut self) -> (DataType, Vec<u8>) {
+        // Read in data so long as there are no 0x00 bytes in the buffer
+        while !self.buffer.contains(&0x00) {
+            let mut data = [0u8; 0xff];
+            let size = self.stream.read(&mut data).unwrap();
+            self.buffer.extend(&data[..size]);
+        }
+
+        // Find the index of the first 0x00 byte and split it off
+        let pos = self.buffer.iter().position(|&r| r == 0x00).unwrap();
+        let data: Vec<u8> = self.buffer.drain(0..pos).collect();
+        
+        // If there is still more data on the buffer, pop the last zero
+        if !self.buffer.is_empty() {
+            self.buffer.drain(0..1).for_each(drop);
+        }
+
+        // Parse and return the packet
+        self.parse_serial_packet(data)
+    }
+
+    /// Writes serial data
+    pub fn write_data(&mut self, data_type: DataType, data: Vec<u8>) -> usize {
+
+        // Create the packet
+        let packet = self.create_serial_packet(data_type, data);
+
+        // Send it
+        self.stream.write(&packet).unwrap()
     }
 }
