@@ -78,21 +78,20 @@ impl<'a, T: Read + Write> CEROSSerial<'a, T> {
         packet.extend(data);
 
         // COBS encode the data
-        let mut out_data = vec![0u8; corncobs::max_encoded_len(packet.len())];
-        let _size = corncobs::encode_buf(&packet, &mut out_data);
-
-        // Return the data
-        out_data
+        cobs::cobsr::encode_vector(&packet).unwrap_or_else(|_| Vec::<u8>::new())
     }
 
     /// Parses a serial packet from an input vector
     pub fn parse_serial_packet(data: Vec<u8>) -> (DataType, Vec<u8>) {
-
+        
         // COBS decode the data
-        let mut parsed_data = vec![0u8; data.len()];
-        let num_decode = corncobs::decode_buf(&data, &mut parsed_data).unwrap_or(0);
-        let data = parsed_data[..num_decode].to_vec();
+        let parsed_data = cobs::cobsr::decode_vector(&data).unwrap();
+        let data = parsed_data;
 
+        // Clear any 0x00 bytes at the beginning
+        let data = data.iter().skip_while(|&x| *x == 0x00).cloned().collect::<Vec<u8>>();
+        
+        
         // If it starts with sout, serr, or kdbg it is a PROS packet
         if data.starts_with(b"sout") {
             (DataType::Print, data[4..].to_vec())
