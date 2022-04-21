@@ -1,4 +1,4 @@
-
+#![cfg(not(feature="use_std"))]
 use acid_io::{Read, Write};
 
 #[cfg(feature = "use_std")]
