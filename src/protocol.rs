@@ -52,12 +52,12 @@ impl<'a, T: Read + Write> CEROSSerial<'a, T> {
     }
 
     /// Creates a new serial packet
-    pub fn create_serial_packet(&self, data_type: DataType, data: Vec<u8>) -> Vec<u8> {
+    pub fn create_serial_packet(pros: bool, data_type: DataType, data: Vec<u8>) -> Vec<u8> {
 
         // Find the data to prepend to the vector based on
         // the packet type and PROS support
         let prepend: Vec<u8> = {
-            if self.pros_compat {
+            if pros {
                 match data_type {
                     DataType::Print => b"sout".to_vec(),
                     DataType::Error => b"serr".to_vec(),
@@ -86,7 +86,7 @@ impl<'a, T: Read + Write> CEROSSerial<'a, T> {
     }
 
     /// Parses a serial packet from an input vector
-    pub fn parse_serial_packet(&self, data: Vec<u8>) -> (DataType, Vec<u8>) {
+    pub fn parse_serial_packet(data: Vec<u8>) -> (DataType, Vec<u8>) {
 
         // COBS decode the data
         let mut parsed_data = vec![0u8; data.len()];
@@ -143,14 +143,14 @@ impl<'a, T: Read + Write> CEROSSerial<'a, T> {
         }
 
         // Parse and return the packet
-        self.parse_serial_packet(data)
+        CEROSSerial::<T>::parse_serial_packet(data)
     }
 
     /// Writes serial data
     pub fn write_data(&mut self, data_type: DataType, data: Vec<u8>) -> usize {
 
         // Create the packet
-        let packet = self.create_serial_packet(data_type, data);
+        let packet = CEROSSerial::<T>::create_serial_packet(self.pros_compat, data_type, data);
 
         // Send it
         self.stream.write(&packet).unwrap()
