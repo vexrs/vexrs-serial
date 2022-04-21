@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 acid_io = { version = "0.1.0" }
-corncobs = "0.1.1"
+cobs = { git = "ssh://git@github.com/cmcqueen/cobs-rs.git" }
 newlib-alloc = "0.1.0"
 vexv5rt = { git = "ssh://git@github.com/Culpeper-Robotics/vexv5rt", optional = true }
 
