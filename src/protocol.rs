@@ -20,6 +20,7 @@ pub enum DataType {
     Print = 0x00,
     Error = 0x01,
     KernelLog = 0x02,
+    DeviceStatistics = 0x03,
 }
 
 
@@ -107,6 +108,7 @@ impl<'a, T: Read + Write> CEROSSerial<'a, T> {
                 0x00 => DataType::Print,
                 0x01 => DataType::Error,
                 0x02 => DataType::KernelLog,
+                0x03 => DataType::DeviceStatistics,
                 _ => {
                     // If it is unrecognized, ignore
                     return (DataType::Print, Vec::new());
