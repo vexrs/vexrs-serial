@@ -7,7 +7,9 @@ edition = "2021"
 
 [dependencies]
 acid_io = { git = "ssh://git@github.com/Culpeper-Robotics/acid_io.git" }
+anyhow = { version = "1.0", default-features = false }
 cobs = { git = "ssh://git@github.com/Culpeper-Robotics/cobs-rs.git" }
+bincode = { version = "2.0.0-rc.1", default-features = false, features = ["alloc", "derive"] }
 
 [features]
 

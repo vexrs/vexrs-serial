@@ -4,6 +4,7 @@ use acid_io::{Read, Write};
 #[cfg(feature = "use_std")]
 use std::io::{Read, Write};
 
+use anyhow::Result;
 
 
 
@@ -13,16 +14,7 @@ use core::prelude::rust_2021::*;
 use alloc::vec;
 use alloc::vec::Vec;
 
-/// Represents the type of data being sent
-#[repr(u8)]
-#[derive(Debug, Copy, Clone)]
-pub enum DataType {
-    Print = 0x00,
-    Error = 0x01,
-    KernelLog = 0x02,
-    DeviceStatistics = 0x03,
-}
-
+use crate::data::*;
 
 
 /// Implements the CEROS serial protocol
@@ -53,30 +45,36 @@ impl<'a, T: Read + Write> CEROSSerial<'a, T> {
     }
 
     /// Creates a new serial packet
-    pub fn create_serial_packet(pros: bool, data_type: DataType, data: Vec<u8>) -> Vec<u8> {
+    pub fn create_serial_packet(pros: bool, data_type: DataType) -> Vec<u8> {
 
-        // Find the data to prepend to the vector based on
-        // the packet type and PROS support
-        let prepend: Vec<u8> = {
+        // Create the packet data
+        let packet: Vec<u8> = {
             if pros {
+                // Parse for PROS compatibility
+                let mut data = Vec::new();
                 match data_type {
-                    DataType::Print => b"sout".to_vec(),
-                    DataType::Error => b"serr".to_vec(),
-                    DataType::KernelLog => b"kdbg".to_vec(),
-                    _ => {
-                        // If PROS does not support it, then return none.
-                        return Vec::new();
+                    DataType::Print(d) => {
+                        data.extend(b"sout");
+                        data.extend(d);
+                    }, DataType::Error(d) => {
+                        data.extend(b"serr");
+                        data.extend(d);
+                    }, DataType::KernelLog(d) => {
+                        if let LogType::Message(d) = d {
+                            data.extend(b"kdbg");
+                            data.extend(d);
+                        }
                     }
-                }
+                };
+
+                data
             } else {
-                // Magic number with data type and length
-                vec![0x37u8, 0x31, 0x32, 0x32, data_type as u8]
+                // Magic number with the encoded data
+                let mut data = vec![0x37u8, 0x31, 0x32, 0x32];
+                data.extend(bincode::encode_to_vec(data_type, bincode::config::standard()).unwrap_or_else(|_| Vec::new()));
+                data
             }
         };
-
-        // Prepend the header to the data
-        let mut packet = prepend;
-        packet.extend(data);
 
         // COBS encode the data
         let mut data =  cobs::cobs::encode_vector(&packet).unwrap_or_else(|_| Vec::<u8>::new());
@@ -85,7 +83,7 @@ impl<'a, T: Read + Write> CEROSSerial<'a, T> {
     }
 
     /// Parses a serial packet from an input vector
-    pub fn parse_serial_packet(data: Vec<u8>) -> (DataType, Vec<u8>) {
+    pub fn parse_serial_packet(data: Vec<u8>) -> Result<DataType> {
         
         // COBS decode the data
         let parsed_data = cobs::cobsr::decode_vector(&data).unwrap();
@@ -96,41 +94,24 @@ impl<'a, T: Read + Write> CEROSSerial<'a, T> {
         
         // If it starts with sout, serr, or kdbg it is a PROS packet
         if data.starts_with(b"sout") {
-            
-            (DataType::Print, data[4..].to_vec())
+            Ok(DataType::Print(data[4..].to_vec()))
         } else if data.starts_with(b"serr") {
-            (DataType::Error, data[4..].to_vec())
+            Ok(DataType::Error(data[4..].to_vec()))
         } else if data.starts_with(b"kdbg") {
-            (DataType::KernelLog, data[4..].to_vec())
+            Ok(DataType::KernelLog(LogType::Message(data[4..].to_vec())))
         } else if data.starts_with(&[0x37, 0x31, 0x32, 0x32]) { // If it starts with the CEROS magic number, parse it as such
-            // Find the data type
-            let data_type = match data[4] {
-                0x00 => DataType::Print,
-                0x01 => DataType::Error,
-                0x02 => DataType::KernelLog,
-                0x03 => DataType::DeviceStatistics,
-                _ => {
-                    // If it is unrecognized, ignore
-                    return (DataType::Print, Vec::new());
-                }
-            };
-            
-        
+            // Parse and return the data
+            let (decoded, _size): (DataType, usize) = bincode::decode_from_slice(&data[4..], bincode::config::standard()).unwrap_or_else(|_| (DataType::Print(Vec::new()), 0));
 
-            // Get the rest of the bytes
-            let data = data[5..].to_vec();
-
-            
-
-            (data_type, data)
+            Ok(decoded)
         } else {
             // Otherwise return no data
-            (DataType::Print, Vec::new())
+            Ok(DataType::Print(Vec::new()))
         }
     }
 
     /// Reads in serial data
-    pub fn read_data(&mut self) -> (DataType, Vec<u8>) {
+    pub fn read_data(&mut self) -> Result<DataType> {
         // Read in data so long as there are no 0x00 bytes in the buffer
         while !self.buffer.contains(&0x00) {
             let mut data = [0u8; 0xff];
@@ -153,10 +134,10 @@ impl<'a, T: Read + Write> CEROSSerial<'a, T> {
     }
 
     /// Writes serial data
-    pub fn write_data(&mut self, data_type: DataType, data: Vec<u8>) -> usize {
+    pub fn write_data(&mut self, data_type: DataType) -> usize {
 
         // Create the packet
-        let packet = CEROSSerial::<T>::create_serial_packet(self.pros_compat, data_type, data);
+        let packet = CEROSSerial::<T>::create_serial_packet(self.pros_compat, data_type);
 
         // Send it
         let size = self.stream.write(&packet).unwrap();

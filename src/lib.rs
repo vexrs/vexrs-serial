@@ -7,3 +7,5 @@ extern crate core;
 
 
 pub mod protocol; // Contains the basic protocol implementation
+
+pub mod data; // Various data classes that are used in the protocol
