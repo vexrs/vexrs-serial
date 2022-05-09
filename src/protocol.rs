@@ -1,10 +1,10 @@
 #[cfg(not(feature="use_std"))]
 use acid_io::{Read, Write};
-use anyhow::Result;
 
 #[cfg(feature = "use_std")]
 use std::io::{Read, Write};
 
+use anyhow::Result;
 
 
 
@@ -14,28 +14,7 @@ use core::prelude::rust_2021::*;
 use alloc::vec;
 use alloc::vec::Vec;
 
-
-/// The type of logging data sent by the brain
-#[repr(u8)]
-#[derive(Debug, Clone, bincode::Decode, bincode::Encode)]
-pub enum LogType {
-    /// A log message
-    Message(Vec<u8>),
-    /// Plot a new data-point from the brain
-    /// on a graph with the given ID
-    Plot(u32, f64),
-}
-
-
-/// Represents the type of data being sent
-#[repr(u8)]
-#[derive(Debug, Clone, bincode::Decode, bincode::Encode)]
-pub enum DataType {
-    Print(Vec<u8>),
-    Error(Vec<u8>),
-    KernelLog(LogType),
-}
-
+use crate::data::*;
 
 
 /// Implements the CEROS serial protocol
