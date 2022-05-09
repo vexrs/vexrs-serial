@@ -1,5 +1,4 @@
 use core::prelude::rust_2021::*;
-use alloc::vec;
 use alloc::vec::Vec;
 
 /// The units to use in an encoder tick
@@ -61,7 +60,7 @@ pub struct MotorData {
     pub direction: i32,
 
     /// The motor's temperature in Degrees Celcius
-    pub temperature: i32,
+    pub temperature: f64,
     /// True if the motor is over temp
     pub over_temp: bool,
 
