@@ -1,10 +1,9 @@
 #[cfg(not(feature="use_std"))]
-use acid_io::{Read, Write};
+use not_io::{Read, Write, Result};
 
 #[cfg(feature = "use_std")]
-use std::io::{Read, Write};
+use std::io::{Read, Write, Result};
 
-use anyhow::Result;
 
 
 
@@ -115,7 +114,7 @@ impl<'a, T: Read + Write> CEROSSerial<'a, T> {
         // Read in data so long as there are no 0x00 bytes in the buffer
         while !self.buffer.contains(&0x00) {
             let mut data = [0u8; 0xff];
-            let size = self.stream.read(&mut data).unwrap();
+            let size = self.stream.read(&mut data)?;
             self.buffer.extend(&data[..size]);
         }
         
@@ -134,17 +133,14 @@ impl<'a, T: Read + Write> CEROSSerial<'a, T> {
     }
 
     /// Writes serial data
-    pub fn write_data(&mut self, data_type: DataType) -> usize {
+    pub fn write_data(&mut self, data_type: DataType) -> Result<usize> {
 
         // Create the packet
         let packet = CEROSSerial::<T>::create_serial_packet(self.pros_compat, data_type);
 
         // Send it
-        let size = self.stream.write(&packet).unwrap();
+        let size = self.stream.write(&packet)?;
 
-        // Flush the buffer
-        self.stream.flush().unwrap();
-
-        size
+        Ok(size)
     }
 }
