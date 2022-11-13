@@ -16,27 +16,27 @@ use alloc::vec::Vec;
 use crate::data::*;
 
 
-/// Implements the CEROS serial protocol
-pub struct CEROSSerial<'a, T: Read + Write> {
+/// Implements the Vexrs serial protocol
+pub struct VexrsSerial<'a, T: Read + Write> {
     stream: &'a mut T,
     buffer: Vec<u8>,
     pros_compat: bool,
 }
 
-impl<'a, T: Read + Write> CEROSSerial<'a, T> {
-    /// Creates a new instance of CEROSSerial
-    pub fn new(stream: &mut T) -> CEROSSerial<T> {
-        CEROSSerial {
+impl<'a, T: Read + Write> VexrsSerial<'a, T> {
+    /// Creates a new instance of VexrsSerial
+    pub fn new(stream: &mut T) -> VexrsSerial<T> {
+        VexrsSerial {
             stream,
             buffer: Vec::new(),
             pros_compat: false
         }
     }
 
-    /// Creates a new instance of CEROSSerial with PROS
+    /// Creates a new instance of VexrsSerial with PROS
     /// compatibility enabled
-    pub fn new_pros(stream: &mut T) -> CEROSSerial<T> {
-        CEROSSerial {
+    pub fn new_pros(stream: &mut T) -> VexrsSerial<T> {
+        VexrsSerial {
             stream,
             buffer: Vec::new(),
             pros_compat: true
@@ -98,7 +98,7 @@ impl<'a, T: Read + Write> CEROSSerial<'a, T> {
             Ok(DataType::Error(data[4..].to_vec()))
         } else if data.starts_with(b"kdbg") {
             Ok(DataType::KernelLog(LogType::Message(data[4..].to_vec())))
-        } else if data.starts_with(&[0x37, 0x31, 0x32, 0x32]) { // If it starts with the CEROS magic number, parse it as such
+        } else if data.starts_with(&[0x37, 0x31, 0x32, 0x32]) { // If it starts with the Vexrs magic number, parse it as such
             // Parse and return the data
             let (decoded, _size): (DataType, usize) = bincode::decode_from_slice(&data[4..], bincode::config::standard()).unwrap_or_else(|_| (DataType::Print(Vec::new()), 0));
 
@@ -129,14 +129,14 @@ impl<'a, T: Read + Write> CEROSSerial<'a, T> {
         }
 
         // Parse and return the packet
-        CEROSSerial::<T>::parse_serial_packet(data)
+        VexrsSerial::<T>::parse_serial_packet(data)
     }
 
     /// Writes serial data
     pub fn write_data(&mut self, data_type: DataType) -> Result<usize> {
 
         // Create the packet
-        let packet = CEROSSerial::<T>::create_serial_packet(self.pros_compat, data_type);
+        let packet = VexrsSerial::<T>::create_serial_packet(self.pros_compat, data_type);
 
         // Send it
         let size = self.stream.write(&packet)?;
