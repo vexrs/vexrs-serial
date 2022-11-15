@@ -1,5 +1,5 @@
 #[cfg(not(feature="use_std"))]
-use not_io::{Read, Write, Result};
+use acid_io::{Read, Write, Result};
 
 #[cfg(feature = "use_std")]
 use std::io::{Read, Write, Result};

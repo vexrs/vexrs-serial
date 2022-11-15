@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-not-io = "0.1.0-alpha"
+acid_io = { git = "ssh://git@github.com/Culpeper-Robotics/acid_io.git" }
 anyhow = { version = "1.0", default-features = false }
 cobs = { git = "ssh://git@github.com/Culpeper-Robotics/cobs-rs.git" }
 bincode = { version = "2.0.0-rc.1", default-features = false, features = ["alloc", "derive"] }
