@@ -1,4 +1,4 @@
-#[cfg(not(feature="use_std"))]
+#[cfg(feature="use_acid_io")]
 use acid_io::{Read, Write, Result};
 
 #[cfg(feature = "use_std")]
