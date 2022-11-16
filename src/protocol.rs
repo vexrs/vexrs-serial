@@ -76,7 +76,7 @@ impl<'a, T: Read + Write> VexrsSerial<'a, T> {
         };
 
         // COBS encode the data
-        let mut data =  cobs::cobs::encode_vector(&packet).unwrap_or_else(|_| Vec::<u8>::new());
+        let mut data =  cobs::cobsr::encode_vector(&packet).unwrap_or_else(|_| Vec::<u8>::new());
         data.push(0x00);
         data
     }
@@ -111,10 +111,13 @@ impl<'a, T: Read + Write> VexrsSerial<'a, T> {
 
     /// Reads in serial data
     pub fn read_data(&mut self) -> Result<DataType> {
+        
         // Read in data so long as there are no 0x00 bytes in the buffer
         while !self.buffer.contains(&0x00) {
             let mut data = [0u8; 0xff];
+            
             let size = self.stream.read(&mut data)?;
+            
             self.buffer.extend(&data[..size]);
         }
         
